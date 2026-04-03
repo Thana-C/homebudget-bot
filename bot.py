@@ -23,6 +23,45 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
+CATEGORIES = {
+    'Breakfast':        ['ข้าวเช้า','โจ๊ก','ขนมปัง','แซนวิช','แซนวิส','โอวัลติน'],
+    'Lunch':            ['ข้าวเที่ยง','ข้าวเทียง','ก๋วยเตี๋ยว','ราดหน้า','ผัดไทย','กินข้าวเที่ยง'],
+    'Dinner':           ['ข้าวเย็น','ข้าวเยน','ข้าวเย็น','ข้าบเย็น','ข้าววเย็น','ข้าวเยน','กับข้าวเย็น','กับข้าวเยน','ข้าวให้','กินข้าวกีบ','ข้าว'],
+    'Coffee/Tea':       ['กาแฟ','กรแฟ','ชา','นมสด','มัทฉะ','ชานม','น้ำชา','น้ำปั่น','ไอศครีม'],
+    'Snack':            ['ขนม','ของกินเล่น','กินเล่น','ลูกชิ้น','ลูกชิัน','กล้วยทอด','snack','ผลไม้','ขนมหวาน'],
+    'Stuff':            ['เซเว่น','7-11','maxvalue','ร้านสะดวกซื้อ','ซื้อจ้าว'],
+    'Transport':        ['จอดรถ','เดินทาง','ทางด่วน','ค่าส่ง','ส่งของ','ค่าส่งของ','พัสดุ','เติมน้ำมัน','น้ำมัน'],
+    'น้ำท่อม':          ['น้ำท่อม','ยาน้ำท่อม','น้ำเปล่า','น้ำ'],
+    'Shopping':         ['ช้อปปิ้ง','เสื้อผ้า','ของใช้','ซ่อม','ซ่อมรองเท้า','ตัดผม','ล้างรถ','ซักผ้า','หัวพอด','พอด'],
+    'Beer':             ['เบียร์','beer','เหล้า','สุรา'],
+    'Drug+Cigarette':   ['บุหรี่','ยา','iqos','บุฟรี่ไฟฟ้า','ยาสูบ'],
+    'Cat':              ['อาหารแมว','แมวหาหมอ','ของแมว','แมว'],
+    'ทำบุญ':            ['ทำบุญ','ใส่ซอง','งานแต่ง','ซองงานแต่ง','ปล่อยปลา'],
+    'ลงทุน':            ['ลงทุน'],
+    'Travel':           ['เที่ยว','travel','esim'],
+    'Other':            [],
+}
+
+PEOPLE_KEYS = {
+    'พี่นิ่ม': 'พี่นิ่ม',
+    'พี่ฟ้าง': 'พี่ฟ้าง',
+    'พี่พอช': 'พี่พอช',
+    'ให้พ่อ': 'ให้พ่อ',
+    'คืนยาย': 'คืนยาย',
+    'อั้ม': 'อั้ม',
+}
+
+def categorize(desc):
+    d = desc.lower().strip()
+    for cat, keywords in CATEGORIES.items():
+        for kw in keywords:
+            if kw.lower() in d:
+                return cat
+    for kw in PEOPLE_KEYS:
+        if kw in desc:
+            return 'Other/Lifestyle'
+    return 'Other'
+
 def parse_items(text):
     items = []
     lines = [l.strip() for l in text.strip().splitlines()]
@@ -63,8 +102,9 @@ async def on_message(message):
     added = []
     total = 0
     for desc, amount in items:
-        ws.append_row([today, desc, amount, '', person, 'expense'])
-        added.append(f'`{desc}` ฿{int(amount):,}')
+        cat = categorize(desc)
+        ws.append_row([today, desc, amount, cat, person, 'expense'])
+        added.append(f'`{desc}` ฿{int(amount):,} — _{cat}_')
         total += amount
 
     lines_out = '\n'.join(added)
