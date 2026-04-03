@@ -25,13 +25,16 @@ client = discord.Client(intents=intents)
 
 def parse_items(text):
     items = []
-    parts = [p.strip() for p in text.split(',')]
-    for part in parts:
-        match = re.match(r'^(.+?)\s+(\d+(?:\.\d+)?)$', part.strip())
+    lines = [l.strip() for l in text.strip().splitlines()]
+    for line in lines:
+        if not line:
+            continue
+        match = re.match(r'^(.+?)\s*(\d+(?:\.\d+)?)\s*$', line)
         if match:
-            desc = match.group(1).strip()
+            desc = match.group(1).strip().rstrip('+-,')
             amount = float(match.group(2))
-            items.append((desc, amount))
+            if desc and amount > 0:
+                items.append((desc, amount))
     return items
 
 @client.event
@@ -54,16 +57,18 @@ async def on_message(message):
 
     items = parse_items(text)
     if not items:
-        await message.reply('❌ รูปแบบไม่ถูก ลองใหม่นะครับ เช่น: `ค่าส่งอง 80, ข้าวเช้า 80, กาแฟ 100`')
+        await message.reply('❌ ไม่เจอรายการ ลองใหม่นะครับ\nเช่น:\n```\nกาแฟ 80\nข้าวเที่ยง 60\nน้ำท่อม 50```')
         return
 
     added = []
+    total = 0
     for desc, amount in items:
         ws.append_row([today, desc, amount, '', person, 'expense'])
-        added.append(f'• {desc} = ฿{int(amount):,}')
+        added.append(f'`{desc}` ฿{int(amount):,}')
+        total += amount
 
-    total = sum(a for _, a in items)
-    reply = '✅ บันทึกแล้วครับ\n' + '\n'.join(added) + f'\n\n💰 รวม: ฿{int(total):,}'
+    lines_out = '\n'.join(added)
+    reply = f'✅ บันทึก {len(items)} รายการ\n{lines_out}\n\n💰 รวม **฿{int(total):,}**'
     await message.reply(reply)
 
 client.run(DISCORD_TOKEN)
